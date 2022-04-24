@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import pyautogui
+import numpy as np
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -20,13 +21,30 @@ def calculate_distance(hand_landmarks) :
 def get_landmark(hand_landmarks, index) :
   return (hand_landmarks.landmark[index].x, hand_landmarks.landmark[index].y)
 
+def get_weighted_mean(images, weights) :
+  n, h, w, d = images.shape
+  weights = weights[:n]
+  result = np.zeros((h, w, d))
+  for i in range(n) :
+    result += images[i] * weights[i]
+  return result
 
+def get_hold_majority(hold_list) :
+  counter = 0
+  for hold in hold_list :
+    if hold :
+      counter += 1
+  return counter > len(hold_list)//2
+    
 cap = cv2.VideoCapture(1)
 center = []
 
 SCREEN_WIDTH = 2560
 SCREEN_HEIGHT = 1600
 hold = False
+
+all_frames = []
+hold_list = []
 
 with mp_hands.Hands(
     model_complexity=0,
@@ -38,7 +56,15 @@ with mp_hands.Hands(
       print("Ignoring empty camera frame.")
       # If loading a video, use 'break' instead of 'continue'.
       continue
+    all_frames.append(image)
+    all_frames = all_frames[-3:]
+    all_frames_array = np.array(all_frames)
+    print(all_frames_array.shape)
+    image = get_weighted_mean(all_frames_array, np.array([0.2, 0.3, 0.5])).astype(np.uint8)
 
+    # image = all_frames_array[-1]
+    print(image.shape)
+    print(image)
     # To improve performance, optionally mark the image as not writeable to
     # pass by reference.
     image.flags.writeable = False
@@ -58,6 +84,9 @@ with mp_hands.Hands(
         last_hold = hold
         dist = calculate_distance(hand_landmarks)
         hold = dist < 4.6
+        # hold_list.append(hold)
+        # hold_list = hold_list[-3:]
+        # hold = get_hold_majority(hold_list)
 
         COLOR = (0, 255, 0) if hold else (0, 0, 255)
 
@@ -82,12 +111,12 @@ with mp_hands.Hands(
           pyautogui.mouseUp()
 
         
-        # mp_drawing.draw_landmarks(
-        #     image,
-        #     hand_landmarks,
-        #     mp_hands.HAND_CONNECTIONS,
-        #     mp_drawing_styles.get_default_hand_landmarks_style(),
-        #     mp_drawing_styles.get_default_hand_connections_style())
+        mp_drawing.draw_landmarks(
+            image,
+            hand_landmarks,
+            mp_hands.HAND_CONNECTIONS,
+            mp_drawing_styles.get_default_hand_landmarks_style(),
+            mp_drawing_styles.get_default_hand_connections_style())
     # Flip the image horizontally for a selfie-view display.
     cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
     if cv2.waitKey(5) & 0xFF == 27:
