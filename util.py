@@ -128,7 +128,7 @@ def extractDistances2(hands_landmarks):
 def extractHandDistances(hand_landmarks):
     landmark = hand_landmarks.landmark
     referencePoints = [0,1]
-    pointsToExtract = [4,5,6,10,14,19,8,12,9,16,13,20,17,2]
+    pointsToExtract = [2,4,5,6,8,9,10,12,13,14,16,17,19,20]
     index_mcp = landmark[5]
     pinky_mcp = landmark[17]
     hand_size = calDist(index_mcp, pinky_mcp)

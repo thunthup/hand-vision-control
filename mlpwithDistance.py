@@ -55,7 +55,7 @@ cv2.setWindowProperty("Calibrate Screen",
                       cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
 cap = cv2.VideoCapture(0)
-with mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tracking_confidence=0.5,max_num_hands=2,) as hands:
+with mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tracking_confidence=0.5,max_num_hands=1,) as hands:
     while cap.isOpened():
         success, image = cap.read()
         if not success:
@@ -87,8 +87,8 @@ with mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tracki
                         [extractedDists])
                     scaledLiveData = scaler.transform(polyVariablesTemp)
                     gesture = gClassifier.predict(scaledLiveData)[0]
-                    xHand= (hands_landmarks.landmark[0].x-0.428) * SCREEN_WIDTH*2.2
-                    yHand = (hands_landmarks.landmark[0].y-0.428) * SCREEN_HEIGHT*2.2
+                    xHand= (hands_landmarks.landmark[0].x-0.4) * SCREEN_WIDTH*2.5
+                    yHand = (hands_landmarks.landmark[0].y-0.4) * SCREEN_HEIGHT*2.5
                     xHand = max(xHand,0)
                     yHand = max(yHand,0)
                     xHand = int(min(xHand,SCREEN_WIDTH))
@@ -160,9 +160,16 @@ with mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tracki
                             print(gClassifier.score(scaledData, labelList))
                             
                             fitted = 1
+                            
                     # Flip the image horizontally for a selfie-view display.
                     #     cv2.imshow('MediaPipe Face Mesh', cv2.flip(image, 1))
-        
+            mp_drawing.draw_landmarks(
+                        image,
+                        hands_landmarks,
+                        mp_hands.HAND_CONNECTIONS,
+                        mp_drawing_styles.get_default_hand_landmarks_style(),
+                        mp_drawing_styles.get_default_hand_connections_style(),
+                    )
         cv2.imshow('Calibrate Screen', blackScreen)
         cv2.imshow('MediaPipe Face Mesh', image)
 
